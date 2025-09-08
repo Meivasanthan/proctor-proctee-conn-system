@@ -8,6 +8,7 @@ import { ArrowLeft, GraduationCap, Users, Mail, Lock, User, CreditCard, Eye, Eye
 import { useToast } from "@/hooks/use-toast";
 import studentIcon from "@/assets/student-icon.jpg";
 import staffIcon from "@/assets/staff-icon.jpg";
+import LoginSlideshow from "@/components/LoginSlideshow";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -64,18 +65,21 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen academic-pattern flex items-center justify-center p-4">
+    <div className="min-h-screen login-gradient flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Button
           variant="ghost"
           onClick={() => navigate('/')}
-          className="mb-6 text-academic-blue hover:text-academic-blue-dark"
+          className="mb-6 text-white hover:text-white/80 bg-white/10 backdrop-blur-sm border-white/20"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Home
         </Button>
 
-        <Card className="shadow-elevated border-0 card-gradient">
+        {/* Auto Slideshow */}
+        <LoginSlideshow />
+
+        <Card className="shadow-elevated border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="text-center pb-6">
             <div className="mx-auto mb-4 h-20 w-20 rounded-full overflow-hidden shadow-academic">
               <img
@@ -86,11 +90,11 @@ const Login = () => {
             </div>
             <div className="flex items-center justify-center gap-2 mb-2">
               {role === 'student' ? (
-                <GraduationCap className="h-6 w-6 text-academic-blue" />
+                <GraduationCap className="h-6 w-6 text-gradient-green" style={{ color: 'hsl(var(--gradient-green))' }} />
               ) : (
-                <Users className="h-6 w-6 text-academic-blue" />
+                <Users className="h-6 w-6 text-gradient-green" style={{ color: 'hsl(var(--gradient-green))' }} />
               )}
-              <CardTitle className="text-2xl font-bold text-academic-blue">
+              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-green-600 bg-clip-text text-transparent">
                 {role === 'student' ? 'Proctee Login' : 'Proctor Login'}
               </CardTitle>
             </div>

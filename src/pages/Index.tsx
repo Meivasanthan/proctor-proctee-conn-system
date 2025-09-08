@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { GraduationCap, Shield, Users, FileText, TrendingUp, Award } from "lucide-react";
 import AcademicCarousel from "@/components/AcademicCarousel";
 import RoleCard from "@/components/RoleCard";
+import HomeSlideshow from "@/components/HomeSlideshow";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -42,11 +43,11 @@ const Index = () => {
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-3 mb-6">
-              <Shield className="h-12 w-12 text-academic-blue" />
+              <Shield className="h-12 w-12 bg-gradient-to-r from-yellow-500 to-green-600 p-1 rounded-lg text-white" />
               <h1 className="text-4xl md:text-6xl font-bold">
-                <span className="text-academic-blue">Proctor</span>
-                <span className="text-academic-gold">–</span>
-                <span className="text-academic-blue">Proctee</span>
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Proctor</span>
+                <span className="bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">–</span>
+                <span className="bg-gradient-to-r from-green-500 to-teal-600 bg-clip-text text-transparent">Proctee</span>
               </h1>
             </div>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
@@ -63,9 +64,9 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Carousel */}
+          {/* Auto Slideshow */}
           <div className="mb-16">
-            <AcademicCarousel />
+            <HomeSlideshow />
           </div>
         </div>
       </section>

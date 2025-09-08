@@ -18,11 +18,11 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 20%;
 
-    /* Academic Blue Primary */
+    /* Colorful Academic Primary Colors */
     --primary: 220 91% 36%;
     --primary-foreground: 0 0% 100%;
 
-    /* Warm Academic Gold */
+    /* Vibrant Academic Colors */
     --secondary: 42 96% 50%;
     --secondary-foreground: 220 15% 20%;
 
@@ -40,18 +40,27 @@ All colors MUST be HSL.
     --input: 220 13% 91%;
     --ring: 220 91% 36%;
 
-    /* Academic Design System Extensions */
+    /* Colorful Academic Design System */
     --academic-blue: 220 91% 36%;
-    --academic-blue-light: 220 91% 45%;
+    --academic-blue-light: 220 91% 55%;
     --academic-blue-dark: 220 91% 25%;
     --academic-gold: 42 96% 50%;
-    --academic-gold-light: 42 96% 60%;
-    --academic-gold-dark: 42 96% 40%;
+    --academic-gold-light: 42 96% 65%;
+    --academic-gold-dark: 42 96% 35%;
     
-    /* Gradients */
+    /* Vibrant Yellow-Green Gradient Colors */
+    --gradient-yellow: 45 100% 56%;  /* #f9d423 */
+    --gradient-green: 169 100% 35%;  /* #00b09b */
+    --gradient-teal: 186 100% 42%;   /* #00d4aa */
+    --gradient-lime: 84 100% 59%;    /* #a8e6cf */
+    
+    /* Beautiful Gradients */
     --gradient-academic: linear-gradient(135deg, hsl(var(--academic-blue)), hsl(var(--academic-gold)));
     --gradient-hero: linear-gradient(135deg, hsl(var(--academic-blue)), hsl(var(--academic-blue-light)));
     --gradient-card: linear-gradient(145deg, hsl(var(--background)), hsl(var(--muted)));
+    --gradient-vibrant: linear-gradient(135deg, hsl(var(--gradient-yellow)), hsl(var(--gradient-green)));
+    --gradient-login: linear-gradient(135deg, hsl(var(--gradient-yellow)) 0%, hsl(var(--gradient-teal)) 50%, hsl(var(--gradient-green)) 100%);
+    --gradient-colorful: linear-gradient(45deg, hsl(var(--gradient-yellow)), hsl(var(--gradient-lime)), hsl(var(--gradient-teal)), hsl(var(--gradient-green)));
     
     /* Shadows */
     --shadow-academic: 0 4px 20px hsl(var(--academic-blue) / 0.1);
@@ -152,6 +161,18 @@ All colors MUST be HSL.
   
   .card-gradient {
     background: var(--gradient-card);
+  }
+  
+  .vibrant-gradient {
+    background: var(--gradient-vibrant);
+  }
+  
+  .login-gradient {
+    background: var(--gradient-login);
+  }
+  
+  .colorful-gradient {
+    background: var(--gradient-colorful);
   }
   
   .transition-smooth {
