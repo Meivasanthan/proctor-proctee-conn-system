@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, User, GraduationCap, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileSectionProps {
   role: 'student' | 'staff';
@@ -17,6 +18,8 @@ interface ProfileSectionProps {
 const ProfileSection = ({ role, username = "User", registerNumber, academicYear = "2024-2027", department }: ProfileSectionProps) => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  const navigate = useNavigate()
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -88,9 +91,9 @@ const ProfileSection = ({ role, username = "User", registerNumber, academicYear 
           <div className="w-full space-y-3 text-center">
             <div>
               <Label className="text-sm text-muted-foreground">Username</Label>
-              <p className="font-semibold text-academic-blue">{username}</p>
+              <p className="font-semibold text-academic-blue" onClick={() => navigate(`/students/${registerNumber}`)}>{username}</p>
             </div>
-            
+
             {role === 'student' ? (
               <>
                 <div>

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,51 +10,206 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Users, FileText, MessageSquare, Search, Send, Eye, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
-const StaffDashboard = () => {
+interface Student {
+  _id: string;
+  studentId: string;
+  name: string;
+  regNo?: string;
+  email: string;
+  department: string;
+  year?: number;
+  section?: string;
+  cgpa?: number;
+  arrears?: { total: number;[key: string]: any };
+  academicYear?: string;
+}
+
+interface StudentRecord {
+  student?: {
+    name: string;
+    regNo: string;
+    department: string;
+  };
+  studentName?: string;
+  registerNo?: string;
+  department?: string;
+  uploads: Record<
+    string,
+    Array<{
+      filename: string;
+      originalname?: string;
+      name?: string;
+      url?: string;
+      path?: string;
+      uploadedAt?: string;
+    }>
+  >;
+  cgpa: number | null;
+  arrearStatus?: string;
+  subjectArrears?: Record<string, any>;
+}
+
+const StaffDashboard = ({ staffId }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string>("");
-  const [reportText, setReportText] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [reportText, setReportText] = useState("");
+  const [studentRecords, setStudentRecords] = useState<StudentRecord | null>(null);
+  const [loadingRecords, setLoadingRecords] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock student data
-  const students = [
-    { id: "1", name: "John Doe", regNo: "21CS001", year: "2024-2027", cgpa: 8.5, arrears: 0 },
-    { id: "2", name: "Jane Smith", regNo: "21CS002", year: "2024-2027", cgpa: 9.2, arrears: 1 },
-    { id: "3", name: "Mike Johnson", regNo: "21CS003", year: "2024-2027", cgpa: 7.8, arrears: 2 },
-    { id: "4", name: "Sarah Wilson", regNo: "21CS004", year: "2024-2027", cgpa: 9.0, arrears: 0 },
-  ];
+  // hardcoded staff ID
 
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.regNo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch students
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setIsLoading(true);
+        const department = "CSE"; // You can hardcode or fetch dynamically
 
-  const handleSendReport = () => {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/${staffId || 'S001'}/students`,
+          {
+            params: { department },
+          }
+        );
+
+        if (response.data && Array.isArray(response.data.data)) {
+          setStudents(response.data.data);
+        } else if (response.data && Array.isArray(response.data)) {
+          setStudents(response.data);
+        } else {
+          console.error("Unexpected response format:", response.data);
+          setStudents([]);
+        }
+      } catch (err: any) {
+        console.error("API Error:", err);
+        toast({ title: "Error", description: "Failed to fetch students", variant: "destructive" });
+        setStudents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, [staffId, toast]);
+
+  // Fetch individual student records
+  const fetchStudentRecords = async (studentId: string) => {
+    if (!studentId) return;
+    setLoadingRecords(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/students/${studentId}`
+      );
+
+      if (response.data && response.data.data) {
+        setStudentRecords(response.data.data);
+      } else {
+        setStudentRecords(null);
+      }
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Error", description: "Unable to fetch student files", variant: "destructive" });
+      setStudentRecords(null);
+    } finally {
+      setLoadingRecords(false);
+    }
+  };
+
+  const handleViewRecordsClick = (studentId: string) => {
+    setSelectedStudent(studentId)
+    fetchStudentRecords(studentId)
+  };
+
+  const handleSendReport = async () => {
     if (!selectedStudent || !reportText.trim()) {
-      toast({
-        title: "Error",
-        description: "Please select a student and enter report text",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Please select a student and enter report text", variant: "destructive" });
       return;
     }
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/students/${selectedStudent}/reports`,
+        { content: reportText }
+      );
 
-    toast({
-      title: "Report Sent",
-      description: `Report sent to ${students.find(s => s.id === selectedStudent)?.name}`,
-    });
-    
-    setReportText("");
-    setSelectedStudent("");
+      toast({ title: "Success", description: "Report sent successfully" });
+      setReportText("");
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Error", description: "Failed to send report", variant: "destructive" });
+    }
   };
 
-  const getStudentDetails = (studentId: string) => {
-    return students.find(s => s.id === studentId);
+  const filteredStudents = students.filter(
+    (s) =>
+      (s.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.regNo || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const renderUploadGroups = (uploadsObj: StudentRecord["uploads"] = {}) => {
+    const categories = Object.keys(uploadsObj);
+    if (!categories.length) return <p className="text-sm text-muted-foreground">No uploads</p>;
+    return (
+      <div className="space-y-4">
+        {categories.map((cat) => (
+          <div key={cat} className="border rounded p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-semibold">{cat}</h4>
+              <Badge>{uploadsObj[cat]?.length || 0}</Badge>
+            </div>
+            <div className="space-y-2">
+              {(uploadsObj[cat] || []).map((f: any, idx: number) => {
+                const name = f.filename || f.originalname || f.name || `file-${idx + 1}`;
+                const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+                const url = f.url || f.path || (f.filename ? `${baseUrl}/uploads/${f.filename}` : null);
+
+                const handleFileClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                  e.preventDefault();
+                  if (!url) return;
+                  window.open(url, "_blank", "noopener,noreferrer");
+                };
+
+                return (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="truncate max-w-[70%]">
+                      {url ? (
+                        <a href={url} onClick={handleFileClick} className="text-blue-600 hover:text-blue-800 hover:underline">
+                          {name}
+                        </a>
+                      ) : (
+                        <span>{name}</span>
+                      )}
+                    </div>
+                    <div>{f.uploadedAt ? new Date(f.uploadedAt).toLocaleString() : ""}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-academic-blue mb-4"></div>
+          <p className="text-muted-foreground">Loading students...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {/* Dashboard Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="card-gradient shadow-academic">
           <CardContent className="p-6">
@@ -66,35 +222,28 @@ const StaffDashboard = () => {
             </div>
           </CardContent>
         </Card>
-
         <Card className="card-gradient shadow-academic">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
               <Award className="h-8 w-8 text-green-600" />
               <div>
                 <p className="text-sm text-muted-foreground">No Arrears</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {students.filter(s => s.arrears === 0).length}
-                </p>
+                <p className="text-2xl font-bold text-green-600">{students.filter((s) => (s.arrears?.total ?? 0) === 0).length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-
         <Card className="card-gradient shadow-academic">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
               <FileText className="h-8 w-8 text-orange-600" />
               <div>
                 <p className="text-sm text-muted-foreground">With Arrears</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {students.filter(s => s.arrears > 0).length}
-                </p>
+                <p className="text-2xl font-bold text-orange-600">{students.filter((s) => (s.arrears?.total ?? 0) > 0).length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-
         <Card className="card-gradient shadow-academic">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
@@ -102,7 +251,7 @@ const StaffDashboard = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Avg CGPA</p>
                 <p className="text-2xl font-bold text-academic-gold">
-                  {(students.reduce((acc, s) => acc + s.cgpa, 0) / students.length).toFixed(1)}
+                  {students.length ? (students.reduce((acc, s) => acc + (s.cgpa || 0), 0) / students.length).toFixed(2) : "0.00"}
                 </p>
               </div>
             </div>
@@ -110,6 +259,7 @@ const StaffDashboard = () => {
         </Card>
       </div>
 
+      {/* Tabs */}
       <Tabs defaultValue="students" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="students">Student Records</TabsTrigger>
@@ -117,157 +267,132 @@ const StaffDashboard = () => {
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
+        {/* Student Records Tab */}
         <TabsContent value="students" className="space-y-4">
           <Card className="card-gradient shadow-academic">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-academic-blue">
-                <Users className="h-5 w-5" />
-                Student Records
-              </CardTitle>
+              <CardTitle className="flex items-center gap-2 text-academic-blue"><Users className="h-5 w-5" /> Student Records</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search students by name or register number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+                <Input placeholder="Search students by name or register number..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {filteredStudents.map((student) => (
-                  <div key={student.id} className="p-4 border rounded-lg hover:bg-accent/50 transition-smooth">
+                  <div key={student._id} className="p-4 border rounded-lg hover:bg-accent/50 transition-smooth">
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold">{student.name}</h3>
                           <Badge variant="outline">{student.regNo}</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">Academic Year: {student.year}</p>
+                        <p className="text-sm text-muted-foreground">Academic Year: {student.year || student.academicYear || "—"}</p>
                         <div className="flex gap-4 text-sm">
-                          <span>CGPA: <span className="font-semibold text-academic-blue">{student.cgpa}</span></span>
-                          <span>Arrears: <span className={`font-semibold ${student.arrears > 0 ? 'text-red-600' : 'text-green-600'}`}>{student.arrears}</span></span>
+                          <span>CGPA: <span className="font-semibold text-academic-blue">{student.cgpa ?? "-"}</span></span>
+                          <span>Arrears: <span className={`font-semibold ${(student.arrears?.total ?? 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>{student.arrears?.total ?? 0}</span></span>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4 mr-1" />
-                          View Details
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/students/${student.studentId}`)}>
+                          <Eye className="h-4 w-4 mr-1" /> View Details
                         </Button>
-                        <Button size="sm" variant="academic-outline">
-                          View Records
-                        </Button>
+                        <Button size="sm" variant="academic-outline" onClick={() => handleViewRecordsClick(student._id)}>View Records</Button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* Selected Student Records */}
+              {selectedStudent && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-3">Selected Student Records</h3>
+                  {loadingRecords ? <p>Loading records...</p> : studentRecords ? (
+                    <div className="space-y-4">
+                      <div className="p-4 border rounded">
+                        <h4 className="font-semibold">Student Info</h4>
+                        <p>Name: {studentRecords.student?.name || studentRecords.studentName || "—"}</p>
+                        <p>Register No: {studentRecords.student?.regNo || studentRecords.registerNo || "—"}</p>
+                        <p>Department: {studentRecords.student?.department || studentRecords.department || "—"}</p>
+                        <p>CGPA: {studentRecords.cgpa ?? "—"}</p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-2">Uploads</h4>
+                        {renderUploadGroups(studentRecords.uploads)}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-2">Subject Arrears</h4>
+                        <pre className="bg-gray-50 p-3 rounded text-sm">{JSON.stringify(studentRecords.subjectArrears || {}, null, 2)}</pre>
+                      </div>
+                    </div>
+                  ) : <p className="text-sm text-muted-foreground">No records loaded for selected student.</p>}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-4">
           <Card className="card-gradient shadow-academic">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-academic-blue">
-                <MessageSquare className="h-5 w-5" />
-                Generate Student Report
-              </CardTitle>
+              <CardTitle className="flex items-center gap-2 text-academic-blue"><MessageSquare className="h-5 w-5" /> Generate Student Report</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="student-select">Select Student</Label>
-                <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a student..." />
-                  </SelectTrigger>
+                <Select value={selectedStudent} onValueChange={(v) => { setSelectedStudent(v); fetchStudentRecords(v); }}>
+                  <SelectTrigger><SelectValue placeholder="Choose a student..." /></SelectTrigger>
                   <SelectContent>
-                    {students.map((student) => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.name} ({student.regNo})
-                      </SelectItem>
-                    ))}
+                    {students.map((s) => <SelectItem key={s._id} value={s._id}>{s.name} ({s.regNo})</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-
               {selectedStudent && (
-                <div className="p-3 border rounded-lg bg-blue-50">
-                  <h4 className="font-semibold text-sm mb-2">Student Details:</h4>
+                <div className="p-3 border rounded-lg bg-blue-50 text-sm text-muted-foreground">
                   {(() => {
-                    const student = getStudentDetails(selectedStudent);
-                    return student ? (
-                      <div className="text-sm text-muted-foreground">
+                    const student = students.find(s => s._id === selectedStudent);
+                    if (!student) return <p>No student found</p>;
+                    return (
+                      <>
                         <p>Name: {student.name}</p>
                         <p>Register No: {student.regNo}</p>
                         <p>CGPA: {student.cgpa}</p>
-                        <p>Arrears: {student.arrears}</p>
-                      </div>
-                    ) : null;
+                        <p>Arrears: {student.arrears?.total ?? 0}</p>
+                      </>
+                    );
                   })()}
                 </div>
               )}
-
               <div className="space-y-2">
                 <Label htmlFor="report-text">Report Content</Label>
-                <Textarea
-                  id="report-text"
-                  placeholder="Enter your report and feedback for the student..."
-                  value={reportText}
-                  onChange={(e) => setReportText(e.target.value)}
-                  rows={6}
-                />
+                <Textarea id="report-text" placeholder="Enter your report and feedback for the student..." value={reportText} onChange={(e) => setReportText(e.target.value)} rows={6} />
               </div>
-
-              <Button onClick={handleSendReport} variant="academic" className="w-full">
-                <Send className="h-4 w-4 mr-2" />
-                Send Report to Student
-              </Button>
+              <Button onClick={handleSendReport} variant="academic" className="w-full"><Send className="h-4 w-4 mr-2" /> Send Report to Student</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
           <Card className="card-gradient shadow-academic">
-            <CardHeader>
-              <CardTitle className="text-academic-blue">Performance Analytics</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-academic-blue">Performance Analytics</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-6">
                 <div>
                   <h4 className="font-semibold mb-2">CGPA Distribution</h4>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Excellent (9.0+)</span>
-                      <span>{students.filter(s => s.cgpa >= 9.0).length} students</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Good (8.0-8.9)</span>
-                      <span>{students.filter(s => s.cgpa >= 8.0 && s.cgpa < 9.0).length} students</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Average (7.0-7.9)</span>
-                      <span>{students.filter(s => s.cgpa >= 7.0 && s.cgpa < 8.0).length} students</span>
-                    </div>
+                    <div className="flex justify-between text-sm"><span>Excellent (9.0+)</span><span>{students.filter(s => s.cgpa >= 9.0).length} students</span></div>
+                    <div className="flex justify-between text-sm"><span>Good (8.0-8.9)</span><span>{students.filter(s => s.cgpa >= 8.0 && s.cgpa < 9.0).length} students</span></div>
+                    <div className="flex justify-between text-sm"><span>Average (7.0-7.9)</span><span>{students.filter(s => s.cgpa >= 7.0 && s.cgpa < 8.0).length} students</span></div>
                   </div>
                 </div>
-
                 <div>
-                  <h4 className="font-semibold mb-2">Arrear Status</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>No Arrears</span>
-                      <span className="text-green-600">{students.filter(s => s.arrears === 0).length} students</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>1-2 Arrears</span>
-                      <span className="text-orange-600">{students.filter(s => s.arrears >= 1 && s.arrears <= 2).length} students</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>3+ Arrears</span>
-                      <span className="text-red-600">{students.filter(s => s.arrears > 2).length} students</span>
-                    </div>
+                  <h4 className="font-semibold mb-2">Arrears Summary</h4>
+                  <div className="flex gap-4 text-sm">
+                    <div>Total Students with Arrears: {students.filter(s => (s.arrears?.total ?? 0) > 0).length}</div>
+                    <div>Total Students without Arrears: {students.filter(s => (s.arrears?.total ?? 0) === 0).length}</div>
                   </div>
                 </div>
               </div>
@@ -280,3 +405,5 @@ const StaffDashboard = () => {
 };
 
 export default StaffDashboard;
+
+

@@ -1,7 +1,7 @@
+// @ts-nocheck
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Shield, Users, FileText, TrendingUp, Award } from "lucide-react";
-import AcademicCarousel from "@/components/AcademicCarousel";
+import { GraduationCap, Shield, Users, FileText, TrendingUp, Award, BookOpen } from "lucide-react";
 import RoleCard from "@/components/RoleCard";
 import HomeSlideshow from "@/components/HomeSlideshow";
 
@@ -75,7 +75,7 @@ const Index = () => {
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-academic-blue mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Choose Your Role
             </h2>
             <p className="text-lg text-muted-foreground">
@@ -91,6 +91,7 @@ const Index = () => {
               icon="student"
               onSelect={() => handleRoleSelect('student')}
             />
+
             <RoleCard
               role="staff"
               title="Proctor (Staff)"
@@ -103,34 +104,47 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
+      <section className="text-center mb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-academic-blue mb-4">
-              Platform Features
+              System Features
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Comprehensive tools for academic management, progress tracking, and seamless communication
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="text-center p-6 rounded-xl shadow-academic card-gradient transition-smooth hover:shadow-elevated"
-              >
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-academic-blue/10">
-                  <feature.icon className="h-8 w-8 text-academic-blue" />
-                </div>
-                <h3 className="text-xl font-semibold text-academic-blue mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground">
-                  {feature.description}
-                </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+              <div className="w-16 h-16 bg-blue-700 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <BookOpen className="h-8 w-8 text-white" />
               </div>
-            ))}
+              <h3 className="text-xl font-bold mb-3 text-foreground">Document Management</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Upload, organize, and track academic documents with seamless integration and secure storage.
+              </p>
+            </div>
+
+            <div className="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+              <div className="w-16 h-16 bg-green-600 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Award className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-foreground">Progress Tracking</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Monitor CGPA, arrears, and academic achievements with real-time updates and detailed analytics.
+              </p>
+            </div>
+
+            <div className="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+              <div className="w-16 h-16 bg-yellow-500 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Users className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-foreground">Mentor Communication</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Direct communication and feedback between proctors and students for enhanced academic guidance.
+              </p>
+            </div>
           </div>
         </div>
       </section>

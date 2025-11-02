@@ -1,24 +1,34 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/hero-image.jpg";
 
+// ✅ Import each image with a unique name
+import heroImage1 from "@/assets/hero-image-1.jpg";
+import heroImage2 from "@/assets/hero-image-2.jpg";
+import heroImage3 from "@/assets/hero-image-3.jpg";
+
+
+// ✅ Each slide can also define its text color (white or black)
 const slides = [
   {
-    image: heroImage,
+    image: heroImage1,
     title: "Connecting Proctors & Proctees",
-    subtitle: "Building stronger academic relationships through technology"
+    subtitle: "Building stronger academic relationships through technology",
+    textColor: "text-white"
   },
   {
-    image: heroImage,
+    image: heroImage2,
     title: "Track Academic Progress",
-    subtitle: "Monitor grades, achievements, and milestones seamlessly"
+    subtitle: "Monitor grades, achievements, and milestones seamlessly",
+    textColor: "text-white"
   },
   {
-    image: heroImage,
+    image: heroImage3,
     title: "Digital Academic Records",
-    subtitle: "Secure, organized, and accessible academic documentation"
-  }
+    subtitle: "Secure, organized, and accessible academic documentation",
+    textColor: "text-white"
+  },
+ 
 ];
 
 const AcademicCarousel = () => {
@@ -53,15 +63,21 @@ const AcademicCarousel = () => {
             className="h-full w-full bg-cover bg-center relative"
             style={{ backgroundImage: `url(${slide.image})` }}
           >
-            <div className="absolute inset-0 hero-gradient opacity-80" />
-            <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">{slide.title}</h2>
+            {/* ❌ Removed hero-gradient to keep original image color */}
+
+            {/* ✅ Alternate text color per slide */}
+            <div
+              className={`absolute inset-0 flex flex-col justify-center items-center text-center p-6 ${slide.textColor}`}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                {slide.title}
+              </h2>
               <p className="text-lg md:text-xl opacity-90">{slide.subtitle}</p>
             </div>
           </div>
         </div>
       ))}
-      
+
       {/* Navigation Buttons */}
       <Button
         variant="ghost"
@@ -71,7 +87,7 @@ const AcademicCarousel = () => {
       >
         <ChevronLeft className="h-6 w-6" />
       </Button>
-      
+
       <Button
         variant="ghost"
         size="icon"
