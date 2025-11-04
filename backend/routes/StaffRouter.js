@@ -24,17 +24,46 @@ router2.get("/students/:id", async (req, res) => {
 });
 
 
-// Staff: create a report (server side can be same as /students/:id/report/pdf)
-router2.get('/students/:id/report', async (req, res) => {
+router2.post("/students/:id/reports", async (req, res) => {
     try {
-        const student = await Student2.findById(req.params.id);
-        if (!student) return res.status(404).json({ error: 'Not found' });
-        // Here staff-specific logic could be applied (comments, grade normalization, etc.)
-        res.json({ generatedAt: new Date(), student });
+        const { content } = req.body;
+
+        if (!content || content.trim() === "") {
+            return res.status(400).json({ error: "Report content required" });
+        }
+
+        const student = await Student2.findOne({ studentId: req.params.id });
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        const report = {
+            content,
+            createdAt: new Date(),
+            createdBy: "Staff", // Optional: replace with real staffId
+        };
+
+        student.reports.push(report);
+        await student.save({ validateBeforeSave: false });
+
+        res.json({ message: "Report added successfully", report });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
+
+
+router2.get("/students/:id/reports", async (req, res) => {
+    try {
+        const student = await Student2.findById(req.params.id).select("name regNo reports");
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        res.json({ studentId: student._id, name: student.name, regNo: student.regNo, reports: student.reports });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 
 // module.exports = router2;

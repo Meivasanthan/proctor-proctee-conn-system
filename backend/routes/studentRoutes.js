@@ -231,41 +231,63 @@ router.post('/student/onduty', upload.single('odLetter'), async (req, res) => {
   }
 });
 
-// Generate a simple PDF report for a student
-router.get('/student:id/report/pdf', async (req, res) => {
+router.get("/student/:id/report/pdf", async (req, res) => {
   try {
-    const student = await Student.findById(req.params.id);
-    if (!student) return res.status(404).json({ error: 'Not found' });
+    const student = await Student.findOne({studentId :req.params.id});
+    if (!student) return res.status(404).json({ error: "Student not found" });
 
+    // ✅ Set PDF headers
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="report-${student.name || student._id}.pdf"`
+    );
 
+    // ✅ Create PDF document
     const doc = new PDFDocument();
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="report-${student._id}.pdf"`);
     doc.pipe(res);
 
-
-    doc.fontSize(18).text(`Student Report: ${student.basic.name}`);
+    // === PDF Content ===
+    doc.fontSize(20).text("Student Report", { align: "center" });
     doc.moveDown();
-    doc.fontSize(12).text(`DOB: ${student.basic.dob ? new Date(student.basic.dob).toLocaleDateString() : ''}`);
-    doc.text(`Phone: ${student.basic.phoneNumber || ''}`);
-    doc.moveDown();
-    doc.text('Marks:');
-    student.marks.forEach(m => {
-      doc.text(`Sem ${m.semester} - CGPA: ${m.cgpa || ''} GPA: ${m.gpa || ''} `);
-    });
-    doc.moveDown();
-    doc.text('Arrears:');
-    student.arrears.forEach(a => {
-      doc.text(`Sem ${a.semester}`);
-      a.courses.forEach(c => doc.text(` - ${c.courseName} (${c.courseCode})`));
-    });
 
+    doc.fontSize(14).text(`Name: ${student.name || ""}`);
+    doc.text(`Register Number: ${student.regNo || ""}`);
+    doc.text(`CGPA: ${student.cgpa || "N/A"}`);
+    doc.text(`Arrears: ${student.arrears?.total ?? 0}`);
+    doc.moveDown();
 
-    doc.end();
+    // ✅ Achievements
+    doc.fontSize(16).text("Achievements:", { underline: true });
+    if (student.achievements?.length > 0) {
+      student.achievements.forEach((a, i) => {
+        doc.fontSize(12).text(`${i + 1}. ${a.type} - ${a.details}`);
+      });
+    } else {
+      doc.fontSize(12).text("No achievements available");
+    }
+
+    doc.moveDown();
+
+    // ✅ Reports
+    doc.fontSize(16).text("Reports:", { underline: true });
+    if (student.reports?.length > 0) {
+      student.reports.forEach((r, i) => {
+        doc.fontSize(12).text(`${i + 1}. ${r.content}`);
+        doc.fontSize(10).text(
+          `Created at: ${new Date(r.createdAt).toLocaleString()}`
+        );
+        doc.moveDown(0.5);
+      });
+    } else {
+      doc.fontSize(12).text("No reports available");
+    }
+
+    doc.end(); // finalize
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
-});
+})
 
 export default router;

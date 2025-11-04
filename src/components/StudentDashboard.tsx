@@ -125,6 +125,30 @@ const StudentDashboard = ({ userData }) => {
     motherPhone: "",
   });
 
+  const handleDownloadReport = async (studentId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/student/${studentId}/report/pdf`, {
+        method: "GET",
+        headers: { "Content-Type": "application/pdf" },
+      });
+
+      if (!response.ok) throw new Error("Failed to download PDF");
+
+      // Convert to blob and trigger browser download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `student-report-${studentId}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast({ title: "Error", description: "Failed to download PDF", variant: "destructive" });
+    }
+  };
+
+
   useEffect(() => {
     setProfile({
       name: "",
@@ -461,7 +485,9 @@ const StudentDashboard = ({ userData }) => {
   // Persist profile in localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("studentProfile");
+      const saved = localStorage.getItem("profile");
+   //   console.log(JSON.parse(saved));
+      console.log("hello worl");
       if (saved) {
         const parsed = JSON.parse(saved);
         setProfile((prev) => ({ ...prev, ...parsed }));
@@ -1690,9 +1716,13 @@ const StudentDashboard = ({ userData }) => {
                 <Button onClick={handlePrint} variant="secondary">
                   <Printer className="mr-2 h-4 w-4" /> Print
                 </Button>
-                <Button onClick={handleDownload}>
-                  <Download className="mr-2 h-4 w-4" /> Download
+                <Button
+                  onClick={() => handleDownloadReport(userData.studentId)}
+                  className="mt-3 bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Download PDF Report
                 </Button>
+
               </div>
             </CardHeader>
             <CardContent>

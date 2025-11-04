@@ -55,6 +55,13 @@ const OnDutySchema = new mongoose.Schema({
   odLetterUrl: String
 }, { _id: false });
 
+const ReportSchema = new mongoose.Schema({
+  content: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  createdBy: { type: String }, // Optional: staff ID or name
+}, { _id: false });
+
+
 
 const StudentSchema = new mongoose.Schema({
   studentId: {
@@ -129,6 +136,8 @@ const StudentSchema = new mongoose.Schema({
   additionalDocuments: [String], // array of file URLs
   leaves: [LeaveSchema],
   onDuties: [OnDutySchema],
+  reports: [ReportSchema],
+
   createdAt: { type: Date, default: Date.now }
 })
 

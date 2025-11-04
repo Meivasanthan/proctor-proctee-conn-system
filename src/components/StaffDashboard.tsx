@@ -61,6 +61,56 @@ const StaffDashboard = ({ staffId }) => {
   const [studentRecords, setStudentRecords] = useState<StudentRecord | null>(null);
   const [loadingRecords, setLoadingRecords] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewReport, setViewReport] = useState(false);
+  // const [selectedStudent, setSelectedStudent] = useState(null);
+  const [reportStudent, setReportStudent] = useState(null);
+  // at top of component
+  const [activeTab, setActiveTab] = useState<string>("students");
+
+
+
+
+  const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  const handleViewRecordsClick = (studentId: string) => {
+   setSelectedStudent(studentId);
+    setViewReport(true);
+
+    // switch to reports tab
+    setActiveTab("reports");
+
+  };
+
+
+  const handleSendReport = async () => {
+    if (!selectedStudent || !reportText.trim()) {
+      toast({ title: "Error", description: "Please select a student and enter report text", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await axios.post(`${BASE_URL}/students/${selectedStudent}/reports`, { content: reportText });
+      toast({ title: "Success", description: "Report sent successfully" });
+      setReportText("");
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Error", description: "Failed to send report", variant: "destructive" });
+    }
+  };
+
+
+
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/students/${selectedStudent}`);
+        setReportStudent(res.data.data);
+      } catch (error) {
+        console.error("Error fetching student:", error);
+      }
+    };
+    fetchStudent();
+  }, [selectedStudent]);
 
   // hardcoded staff ID
 
@@ -121,29 +171,7 @@ const StaffDashboard = ({ staffId }) => {
     }
   };
 
-  const handleViewRecordsClick = (studentId: string) => {
-    setSelectedStudent(studentId)
-    fetchStudentRecords(studentId)
-  };
 
-  const handleSendReport = async () => {
-    if (!selectedStudent || !reportText.trim()) {
-      toast({ title: "Error", description: "Please select a student and enter report text", variant: "destructive" });
-      return;
-    }
-    try {
-      await axios.post(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/students/${selectedStudent}/reports`,
-        { content: reportText }
-      );
-
-      toast({ title: "Success", description: "Report sent successfully" });
-      setReportText("");
-    } catch (err: any) {
-      console.error(err);
-      toast({ title: "Error", description: "Failed to send report", variant: "destructive" });
-    }
-  };
 
   const filteredStudents = students.filter(
     (s) =>
@@ -260,12 +288,21 @@ const StaffDashboard = ({ staffId }) => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="students" className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="students">Student Records</TabsTrigger>
-          <TabsTrigger value="reports">Generate Reports</TabsTrigger>
+          <TabsTrigger id="reports-tab" value="reports">Generate Reports</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
+{/* 
+        <Tabs className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="students">Student Records</TabsTrigger>
+            <TabsTrigger value="reports">Generate Reports</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+          ...
+         */}
 
         {/* Student Records Tab */}
         <TabsContent value="students" className="space-y-4">
@@ -297,7 +334,7 @@ const StaffDashboard = ({ staffId }) => {
                         <Button size="sm" variant="outline" onClick={() => navigate(`/students/${student.studentId}`)}>
                           <Eye className="h-4 w-4 mr-1" /> View Details
                         </Button>
-                        <Button size="sm" variant="academic-outline" onClick={() => handleViewRecordsClick(student._id)}>View Records</Button>
+                        <Button size="sm" variant="academic-outline" onClick={() => handleViewRecordsClick(student.studentId)}>Create Records</Button>
                       </div>
                     </div>
                   </div>
@@ -334,45 +371,41 @@ const StaffDashboard = ({ staffId }) => {
         </TabsContent>
 
         {/* Reports Tab */}
-        <TabsContent value="reports" className="space-y-4">
-          <Card className="card-gradient shadow-academic">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-academic-blue"><MessageSquare className="h-5 w-5" /> Generate Student Report</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="student-select">Select Student</Label>
-                <Select value={selectedStudent} onValueChange={(v) => { setSelectedStudent(v); fetchStudentRecords(v); }}>
-                  <SelectTrigger><SelectValue placeholder="Choose a student..." /></SelectTrigger>
-                  <SelectContent>
-                    {students.map((s) => <SelectItem key={s._id} value={s._id}>{s.name} ({s.regNo})</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              {selectedStudent && (
-                <div className="p-3 border rounded-lg bg-blue-50 text-sm text-muted-foreground">
-                  {(() => {
-                    const student = students.find(s => s._id === selectedStudent);
-                    if (!student) return <p>No student found</p>;
-                    return (
-                      <>
-                        <p>Name: {student.name}</p>
-                        <p>Register No: {student.regNo}</p>
-                        <p>CGPA: {student.cgpa}</p>
-                        <p>Arrears: {student.arrears?.total ?? 0}</p>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="report-text">Report Content</Label>
-                <Textarea id="report-text" placeholder="Enter your report and feedback for the student..." value={reportText} onChange={(e) => setReportText(e.target.value)} rows={6} />
-              </div>
-              <Button onClick={handleSendReport} variant="academic" className="w-full"><Send className="h-4 w-4 mr-2" /> Send Report to Student</Button>
-            </CardContent>
+        {viewReport && reportStudent && (
+          <Card className="p-4 bg-slate-50 border shadow-md">
+            <h2 className="text-xl font-semibold mb-3">{reportStudent.name} ({reportStudent.regNo})</h2>
+            <p>CGPA: {reportStudent.cgpa}</p>
+            <p>Arrears: {reportStudent.arrears?.total ?? 0}</p>
+
+            <h3 className="mt-4 font-bold text-blue-600">Achievements:</h3>
+            {reportStudent.achievements?.length ? (
+              <ul className="list-disc ml-6">
+                {reportStudent.achievements.map((a, i) => (
+                  <li key={i}>{a.type} - {a.details}</li>
+                ))}
+              </ul>
+            ) : <p>No achievements yet</p>}
+
+            <h3 className="mt-4 font-bold text-blue-600">Reports:</h3>
+            {reportStudent.reports?.length ? (
+              <ul className="list-disc ml-6">
+                {reportStudent.reports.map((r, i) => (
+                  <li key={i}>{r.content} <span className="text-xs text-gray-500">({new Date(r.createdAt).toLocaleString()})</span></li>
+                ))}
+              </ul>
+            ) : <p>No reports yet</p>}
+
+            <div className="mt-4">
+              <Textarea
+                placeholder="Write new report..."
+                value={reportText}
+                onChange={(e) => setReportText(e.target.value)}
+              />
+              <Button onClick={handleSendReport} className="mt-2 w-full">Send Report</Button>
+            </div>
           </Card>
-        </TabsContent>
+        )}
+
 
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
