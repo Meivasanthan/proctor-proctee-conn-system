@@ -33,6 +33,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import axios from "axios";
 
 interface ArrearDetail {
   courseName: string;
@@ -74,6 +75,7 @@ const StudentDashboard = ({ userData }) => {
   const [selectedFile, setSelectedFile] = useState([]);
   const [uploadData, setUploadData] = useState({ details: "" });
 
+  const [activeTab, setActiveTab] = useState<string>("profile");
 
   // === Leave & OD Forms ===
   const [leaveForm, setLeaveForm] = useState({
@@ -124,6 +126,11 @@ const StudentDashboard = ({ userData }) => {
     motherOccupation: "",
     motherPhone: "",
   });
+
+  const [student, setStudent] = useState(null);
+
+
+
 
   const handleDownloadReport = async (studentId) => {
     try {
@@ -197,12 +204,18 @@ const StudentDashboard = ({ userData }) => {
 
   };
 
-  // const removeFile = (category: string, index: number) => {
-  //   setUploadedFiles((prev) => ({
-  //     ...prev,
-  //     [category]: prev[category].filter((_, i) => i !== index),
-  //   }));
-  // };
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/students/${userData.studentId}`);
+        setStudent(res.data.data);
+      } catch (error) {
+        console.error("Error fetching student:", error);
+      }
+    };
+    fetchStudent();
+
+  }, [])
 
   const toggleArrearStatus = (sem: string) => {
     setArrearStatus((prev) => ({ ...prev, [sem]: !prev[sem] }));
@@ -290,12 +303,12 @@ const StudentDashboard = ({ userData }) => {
   const updateGPA = (sem: string, val: string) =>
     setGpaData((prev) => ({ ...prev, [sem]: val }));
 
-  const calculateOverall = (data: { [key: string]: string }) => {
-    const values = Object.values(data).filter((v) => v && !isNaN(parseFloat(v)));
-    if (values.length === 0) return "0.00";
-    const total = values.reduce((a, b) => a + parseFloat(b), 0);
-    return (total / values.length).toFixed(2);
+  const calculateOverall = (data: number[]) => {
+    if (!data || data.length === 0) return "0.00";
+    const total = data.reduce((a, b) => a + b, 0);
+    return (total / data.length).toFixed(2);
   };
+
 
   // Profile change handler with percentage auto-calc
   const handleProfileChange = (field: string, value: string) => {
@@ -486,7 +499,7 @@ const StudentDashboard = ({ userData }) => {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("profile");
-   //   console.log(JSON.parse(saved));
+      //   console.log(JSON.parse(saved));
       console.log("hello worl");
       if (saved) {
         const parsed = JSON.parse(saved);
@@ -730,7 +743,8 @@ const StudentDashboard = ({ userData }) => {
             <TrendingUp className="text-blue-500 h-8 w-8" />
             <div>
               <p className="text-sm text-gray-500">Overall CGPA</p>
-              <p className="text-2xl font-bold text-blue-600">{calculateOverall(cgpaData)}</p>
+              <p className="text-2xl font-bold text-blue-600">{calculateOverall(student?.marks?.map(cgp => Number(cgp.cgpa)))
+              }</p>
             </div>
           </CardContent>
         </Card>
@@ -740,7 +754,7 @@ const StudentDashboard = ({ userData }) => {
             <Award className="text-yellow-500 h-8 w-8" />
             <div>
               <p className="text-sm text-gray-500">Achievements</p>
-              <p className="text-2xl font-bold text-yellow-600">{uploadedFiles.achievements.length}</p>
+              <p className="text-2xl font-bold text-yellow-600">{student?.achievements?.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -751,7 +765,7 @@ const StudentDashboard = ({ userData }) => {
             <div>
               <p className="text-sm text-gray-500">Clear Semesters</p>
               <p className="text-2xl font-bold text-green-600">
-                {Object.values(arrearStatus).filter((s) => !s).length}/8
+                {student?.arrears?.length}/8
               </p>
             </div>
           </CardContent>
@@ -759,7 +773,7 @@ const StudentDashboard = ({ userData }) => {
       </div>
 
       {/* Tabs Section */}
-      <Tabs defaultValue="profile" className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} className="w-full">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="marks">Marks & CGPA</TabsTrigger>
@@ -1712,18 +1726,39 @@ const StudentDashboard = ({ userData }) => {
           <Card>
             <CardHeader className="flex justify-between items-center">
               <CardTitle>Report Overview</CardTitle>
-              <div className="flex gap-2">
-                <Button onClick={handlePrint} variant="secondary">
-                  <Printer className="mr-2 h-4 w-4" /> Print
-                </Button>
-                <Button
-                  onClick={() => handleDownloadReport(userData.studentId)}
-                  className="mt-3 bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Download PDF Report
-                </Button>
 
+
+              <div className="bg-white shadow-md rounded-2xl p-6 w-full max-w-3xl mx-auto">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
+                  Student Reports
+                </h2>
+
+                <div className="space-y-4">
+                  {student?.reports?.map((report) => (
+                    <div
+                      key={report.id}
+                      className="border rounded-xl p-4 hover:shadow-sm transition bg-gray-50"
+                    >
+                      <p className="text-lg font-medium text-blue-600 mb-1">
+                        {report.content}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {report.createdAt.toLocaleString('en-GB')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 flex justify-center">
+                  <Button
+                    onClick={() => handleDownloadReport(userData.studentId)}
+                    className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-xl transition"
+                  >
+                    Download PDF Report
+                  </Button>
+                </div>
               </div>
+
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">
