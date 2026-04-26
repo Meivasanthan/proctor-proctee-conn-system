@@ -11,6 +11,38 @@ export const axiosInstance = axios.create({
   },
 });
 
+// ✅ Add request interceptor to include token in all requests
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ✅ Create axios instance for camera and other non-API routes
+export const axiosBase = axios.create({
+  baseURL: "http://localhost:5000",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// ✅ Add request interceptor for base axios instance
+axiosBase.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // ✅ Define endpoints (for easy reuse)
 export const endpoints = {
   registerStudent: "/students/register",

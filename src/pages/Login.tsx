@@ -17,7 +17,31 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const role = location.state?.role as 'student' | 'staff';
+
+  // Get role from state or URL params
+  const roleFromState = location.state?.role as 'student' | 'staff';
+  const urlParams = new URLSearchParams(location.search);
+  const roleFromUrl = urlParams.get('role') as 'student' | 'staff';
+  const role = roleFromState || roleFromUrl;
+
+  // Debug logging
+  console.log("Location state:", location.state);
+  console.log("Role from state:", roleFromState);
+  console.log("Role from URL:", roleFromUrl);
+  console.log("Final role:", role);
+
+  // If role is not provided or invalid, redirect back to home
+  if (!role || (role !== 'student' && role !== 'staff')) {
+    console.error("❌ Invalid role provided:", role);
+    toast({
+      title: "Error",
+      description: "Invalid role selected. Please choose student or staff.",
+      variant: "destructive",
+    });
+    navigate('/');
+    return null; // Don't render the component
+  }
+
   const [formData, setFormData] = useState({
     username: '',
     registerNumber: '',
@@ -30,6 +54,16 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check if role is available
+    if (!role) {
+      toast({
+        title: "Error",
+        description: "Role not found. Please go back and select your role.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // 🧩 Validation
     if (!formData.email || !formData.password || !formData.department) {
@@ -102,7 +136,10 @@ const Login = () => {
         title: "Login Successful!",
         // description: `Welcome ${data.user.name || formData.username}`,
       });
-      localStorage.setItem("profile", data.user)
+
+      // Store both token and profile in localStorage
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("profile", JSON.stringify(data.user));
 
       // 🧭 Navigate after 1.5 seconds
       setTimeout(() => {

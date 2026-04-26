@@ -2,7 +2,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
 import morgan from 'morgan';
-import { limiter } from './middleware/auth.js';
+import { limiter } from '../middleware/auth.js';
 
 export const configureSecurityMiddleware = (app) => {
   // Security HTTP headers

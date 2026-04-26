@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, FileText, MessageSquare, Search, Send, Eye, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import CameraMonitoring from "./CameraMonitoring";
 
 interface Student {
   _id: string;
@@ -73,7 +74,7 @@ const StaffDashboard = ({ staffId }) => {
   const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   const handleViewRecordsClick = (studentId: string) => {
-   setSelectedStudent(studentId);
+    setSelectedStudent(studentId);
     setViewReport(true);
 
     // switch to reports tab
@@ -289,12 +290,13 @@ const StaffDashboard = ({ staffId }) => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="students">Student Records</TabsTrigger>
           <TabsTrigger id="reports-tab" value="reports">Generate Reports</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="camera">Camera Monitoring</TabsTrigger>
         </TabsList>
-{/* 
+        {/* 
         <Tabs className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="students">Student Records</TabsTrigger>
@@ -431,6 +433,11 @@ const StaffDashboard = ({ staffId }) => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Camera Monitoring Tab */}
+        <TabsContent value="camera" className="space-y-4">
+          <CameraMonitoring staffId={staffId} />
         </TabsContent>
       </Tabs>
     </div>

@@ -11,6 +11,7 @@ import AuthRouter from "./routes/AuthRouter.js";
 import studentRoutes from "./routes/studentRoutes.js";
 // import uploadRoutes from "./routes/uploadRoutes.js";
 import StaffRoutes from "./routes/StaffRouter.js";
+import cameraRoutes from "./routes/cameraRoutes.js";
 
 dotenv.config();
 
@@ -73,6 +74,7 @@ app.use(AuthRouter);
 app.use(studentRoutes);
 // app.use(uploadRoutes);
 app.use(StaffRoutes);
+app.use(cameraRoutes);
 
 // Default route
 app.get("/", (req, res) => {
@@ -82,7 +84,7 @@ app.get("/", (req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   console.error("❌ Error:", err.message);
-  res.status(err.status || 500).json({
+  res.status(err.statusCode || 500).json({
     error: err.message || "Internal Server Error",
   });
 });

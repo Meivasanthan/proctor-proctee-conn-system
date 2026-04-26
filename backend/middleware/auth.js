@@ -19,8 +19,13 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // 3) Check if user still exists
-    const currentUser = await Student.findById(decoded.id) || await Staff.findById(decoded.id);
-    
+    let currentUser;
+    if (decoded.role === 'student') {
+      currentUser = await Student.findById(decoded._id);
+    } else if (decoded.role === 'staff') {
+      currentUser = await Staff.findById(decoded._id);
+    }
+
     if (!currentUser) {
       return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
@@ -30,8 +35,9 @@ export const protect = async (req, res, next) => {
       return next(new AppError('User recently changed password! Please log in again.', 401));
     }
 
-    // Grant access to protected route
-    req.user = currentUser;
+    // Grant access to protected route - add role to user object
+    req.user = currentUser.toObject();
+    req.user.role = decoded.role;
     next();
   } catch (error) {
     next(error);
