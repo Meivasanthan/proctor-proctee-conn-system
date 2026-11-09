@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Shield, Users, FileText, TrendingUp, Award, BookOpen } from "lucide-react";
 import RoleCard from "@/components/RoleCard";
+import AttendanceCard from "@/components/AttendanceCard";
 import HomeSlideshow from "@/components/HomeSlideshow";
 
 const Index = () => {
@@ -62,6 +63,32 @@ const Index = () => {
                 Learn More
               </Button>
             </div>
+
+
+            {/* <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                variant="academic"
+                size="lg"
+                className="text-lg px-8"
+                onClick={() => navigate("/login")}
+              >
+                <GraduationCap className="mr-2 h-5 w-5" />
+                Get Started Today
+              </Button>
+
+              <Button
+                variant="academic-outline"
+                size="lg"
+                className="text-lg px-8"
+                onClick={() => {
+                  window.location.href = "http://localhost:3000";
+                }}
+              >
+                <Users className="mr-2 h-5 w-5" />
+                Attendance Management
+              </Button>
+            </div> */}
+
           </div>
 
           {/* Auto Slideshow */}
@@ -83,7 +110,8 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 justify-center gap-8 max-w-4xl mx-auto">
+
             <RoleCard
               role="student"
               title="Proctee (Student)"
@@ -99,6 +127,14 @@ const Index = () => {
               icon="staff"
               onSelect={() => handleRoleSelect('staff')}
             />
+
+            {/* Center Attendance Card */}
+            <div className="md:col-span-2 flex justify-center">
+              <div className="w-full md:w-[calc(50%-1rem)]">
+                <AttendanceCard />
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
